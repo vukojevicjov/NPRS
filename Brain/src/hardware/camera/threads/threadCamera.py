@@ -47,6 +47,9 @@ from src.utils.messages.allMessages import StateChange
 from src.utils.messages.messageHandlerSubscriber import messageHandlerSubscriber
 from src.statemachine.systemMode import SystemMode
 
+#Nasa skripta
+from lane_follower_func import LaneFollower
+
 class threadCamera(ThreadWithStop):
     """Thread which will handle camera functionalities.\n
     Args:
@@ -69,6 +72,13 @@ class threadCamera(ThreadWithStop):
         self.recordingSender = messageHandlerSender(self.queuesList, Recording)
         self.mainCameraSender = messageHandlerSender(self.queuesList, mainCamera)
         self.serialCameraSender = messageHandlerSender(self.queuesList, serialCamera)
+
+        #Moj skromni dodatak
+        self.lane_follower = LaneFollower()
+        from src.hardware.serialhandler.messageConverter import MessageConverter
+        self.converter = MessageConverter()
+        self.last_control_time = 0
+
 
         self.subscribe()
         self._init_camera()
@@ -124,10 +134,43 @@ class threadCamera(ThreadWithStop):
             mainRequest = self.camera.capture_array("main")
             serialRequest = self.camera.capture_array("lores")  # Will capture an array that can be used by OpenCV library
 
+
+
+            #Jos jedan skromni doprinos
+            serialRequest = cv2.cvtColor(serialRequest, cv2.COLOR_YUV2BGR_I420)
+            frame = serialRequest
+
+
+            current_time = time.time()
+
+            if current_time - self.last_control_time > 0.1:
+                self.last_control_time = current_time
+
+                # Get latest mode
+                mode_message = self.stateChangeSubscriber.receive()
+
+                if mode_message is not None and mode_message == "AUTO":
+
+                    error = self.lane_follower.process(frame)
+
+                    Kp = 0.1
+                    steer = int(Kp * error)
+                    steer = max(-25, min(25, steer))
+
+                    cmd = self.converter.get_command("vcd", speed=5, steer=steer, time=100)
+                    self.queuesList["General"].put(cmd)
+
+                    #Za prvi test speed = 5, posle cemo sutnuti tipa 80 bar
+                    print("AUTO | Steer:", steer)
+
+
+
+
+
             if self.recording == True:
                 self.video_writer.write(mainRequest) # type: ignore
 
-            serialRequest = cv2.cvtColor(serialRequest, cv2.COLOR_YUV2BGR_I420) # type: ignore
+            #serialRequest = cv2.cvtColor(serialRequest, cv2.COLOR_YUV2BGR_I420) # type: ignore
 
             _, mainEncodedImg = cv2.imencode(".jpg", mainRequest) # type: ignore
             _, serialEncodedImg = cv2.imencode(".jpg", serialRequest) # type: ignore
