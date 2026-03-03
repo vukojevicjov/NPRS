@@ -157,7 +157,14 @@ class threadCamera(ThreadWithStop):
                     steer = int(Kp * error)
                     steer = max(-25, min(25, steer))
 
-                    cmd = self.converter.get_command("vcd", speed=5, steer=steer, time=100)
+                    #cmd = self.converter.get_command("vcd", speed=5, steer=steer, time=100) ne treba ovde da konvertujemo
+                    cmd = {
+                        "Speed": 5,
+                        "Steer": steer,
+                        "Time": 100
+                    }
+
+                    # Poruku prosledjujemo kao dict jer se to od nas ocekuje
                     self.queuesList["General"].put(cmd)
 
                     #Za prvi test speed = 5, posle cemo sutnuti tipa 80 bar
