@@ -48,7 +48,7 @@ from src.utils.messages.messageHandlerSubscriber import messageHandlerSubscriber
 from src.statemachine.systemMode import SystemMode
 
 #Nasa skripta
-from lane_follower_func import LaneFollower
+from src.hardware.camera.threads.lane_follower_func import LaneFollower
 
 class threadCamera(ThreadWithStop):
     """Thread which will handle camera functionalities.\n
@@ -75,8 +75,6 @@ class threadCamera(ThreadWithStop):
 
         #Moj skromni dodatak
         self.lane_follower = LaneFollower()
-        from src.hardware.serialhandler.messageConverter import MessageConverter
-        self.converter = MessageConverter()
         self.last_control_time = 0
 
 
