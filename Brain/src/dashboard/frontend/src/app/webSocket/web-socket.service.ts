@@ -65,13 +65,14 @@ export class WebSocketService {
     'Calibration',
     'CalibPWMData',
     'CalibRunDone',
-    'ImuAck'
+    'ImuAck',
+    'console_log'
   ]);
 
   constructor() {
     this.webSocket = new Socket({
-    url: "http://<RPi_IP>:5005",
-    options: {},
+      url: "http://10.80.33.123:5005",
+      options: {},
     });
 
     // Listen for all messages from the WebSocket server
@@ -210,6 +211,11 @@ export class WebSocketService {
     return this.webSocket.fromEvent('SerialConnectionState');
   }
 
+  // Method to receive state change updates from backend
+  receiveStateChange(): Observable<any> {
+    return this.webSocket.fromEvent('StateChange');
+  }
+
   receiveCalibrationData(): Observable<any> {
     return this.webSocket.fromEvent('Calibration');
   }
@@ -220,6 +226,10 @@ export class WebSocketService {
 
   receiveNucleoAlive(): Observable<any> {
     return this.webSocket.fromEvent('AliveSignal');
+  }
+
+  receiveConsoleLog(): Observable<any> {
+    return this.webSocket.fromEvent('console_log');
   }
 
   // Method to receive the initial connection confirmation
