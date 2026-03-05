@@ -86,8 +86,8 @@ class processSerialHandler(WorkerProcess):
 
     def _init_senders(self):
         self.serialConnectedSender = messageHandlerSender(self.queuesList, SerialConnectionState)
-        self.KlemSender = messageHandlerSender(self.queuesList, Klem)
-        self.Control = messageHandlerSender(self.queuesList, Control)
+        self.klemSender = messageHandlerSender(self.queuesList, Klem)
+        self.controlSender = messageHandlerSender(self.queuesList, Control)
 
     def _safe_close_serial(self):
         """Safely close the serial connection with proper error handling."""
@@ -203,7 +203,7 @@ class processSerialHandler(WorkerProcess):
     def state_change_handler(self):
         message = self.stateChangeSubscriber.receive()
         if message is not None:
-            modeDict = SystemMode[message].value["serial_handler"]["process"]
+            modeDict = SystemMode[message].value["serial_handler"]["process"] # ovde moze biti greska jer moramo poslati da je SystemMode nesto
 
             if modeDict["enabled"] == True:
                 # only resume if serial is connected
@@ -256,17 +256,25 @@ if __name__ == "__main__":
         "General": Queue(),
         "Config": Queue(),
     }
+
+    stateSender = messageHandlerSender(queueList, StateChange)
+
     dashboard_ready = Event()
     dashboard_ready.set()
     logger = logging.getLogger()
     pipeRecv, pipeSend = Pipe(duplex=False)
     process = processSerialHandler(queueList, logger,dashboard_ready = dashboard_ready, debugging = debugg, example=True)
     process.daemon = True
+
     process.start()
-    time.sleep(10)
+    time.sleep(2)
+
+    stateSender.send("AUTO")
+
+    time.sleep(1)
  
-    process.KlemSender.send("30")
-    process.Control.send({
+    process.klemSender.send("30")
+    process.controlSender.send({
         "Time": "800",
         "Steer": "0",
         "Speed": "10"
