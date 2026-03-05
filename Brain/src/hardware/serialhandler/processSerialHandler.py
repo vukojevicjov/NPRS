@@ -230,6 +230,7 @@ class processSerialHandler(WorkerProcess):
     def _init_threads(self):
         """Initializes the read and the write thread."""
         readTh = threadRead(self, self.historyFile, self.queuesList, self.logger, self.debugging)
+
         writeTh = threadWrite(self, self.historyFile, self.queuesList, self.logger, self.debugging, self.example)
         self.threads.extend([readTh, writeTh])
 
@@ -242,7 +243,7 @@ class processSerialHandler(WorkerProcess):
 #                  in terminal:    python3 processSerialHandler.py
 
 if __name__ == "__main__":
-    from multiprocessing import Queue, Pipe
+    from multiprocessing import Queue, Pipe, Event
     import logging
     import time
 
@@ -255,14 +256,17 @@ if __name__ == "__main__":
         "General": Queue(),
         "Config": Queue(),
     }
+    dashboard_ready = Event()
+    dashboard_ready.set()
     logger = logging.getLogger()
     pipeRecv, pipeSend = Pipe(duplex=False)
-    process = processSerialHandler(queueList, logger, debugg, True)
+    process = processSerialHandler(queueList, logger,dashboard_ready = dashboard_ready, debugging = debugg, example=True)
     process.daemon = True
     process.start()
-
-    KlemSender.send("30")
-    ControlSender.send({
+    time.sleep(10)
+ 
+    process.KlemSender.send("30")
+    process.Control.send({
         "Time": "800",
         "Steer": "0",
         "Speed": "10"
