@@ -43,7 +43,7 @@ from src.hardware.serialhandler.threads.threadWrite import threadWrite
 from src.utils.messages.messageHandlerSubscriber import messageHandlerSubscriber
 from src.utils.messages.messageHandlerSender import messageHandlerSender
 from src.statemachine.systemMode import SystemMode
-from src.utils.messages.allMessages import StateChange, SerialConnectionState
+from src.utils.messages.allMessages import StateChange, SerialConnectionState, Klem, Control
 
 class processSerialHandler(WorkerProcess):
     """This process handle connection between NUCLEO and Raspberry PI.\n
@@ -86,6 +86,8 @@ class processSerialHandler(WorkerProcess):
 
     def _init_senders(self):
         self.serialConnectedSender = messageHandlerSender(self.queuesList, SerialConnectionState)
+        self.KlemSender = messageHandlerSender(self.queuesList, Klem)
+        self.Control = messageHandlerSender(self.queuesList, Control)
 
     def _safe_close_serial(self):
         """Safely close the serial connection with proper error handling."""
@@ -258,5 +260,12 @@ if __name__ == "__main__":
     process = processSerialHandler(queueList, logger, debugg, True)
     process.daemon = True
     process.start()
-    time.sleep(4)  # modify the value to increase/decrease the time of the example
+
+    KlemSender.send("30")
+    ControlSender.send({
+        "Time": "800",
+        "Steer": "0",
+        "Speed": "10"
+    })
+
     process.stop()
