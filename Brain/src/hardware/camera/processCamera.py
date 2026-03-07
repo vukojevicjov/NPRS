@@ -29,6 +29,13 @@
 if __name__ == "__main__":
     import sys
     sys.path.insert(0, "../../..")
+    queueList = {
+    "Critical": Queue(),
+    "Warning": Queue(),
+    "General": Queue(),
+    "Config": Queue(),
+    "Control": Queue(),  # <<< Dodato za Control
+}
 
 from cv2 import meanShift
 from src.templates.workerprocess import WorkerProcess
@@ -36,8 +43,8 @@ from src.hardware.camera.threads.threadCamera import threadCamera
 from src.statemachine.stateMachine import StateMachine
 from src.statemachine.systemMode import SystemMode
 from src.utils.messages.messageHandlerSubscriber import messageHandlerSubscriber
-from src.utils.messages.allMessages import StateChange
-
+from src.utils.messages.allMessages import StateChange, Control
+import queue
 
 class processCamera(WorkerProcess):
     """This process handle camera.\n
@@ -100,7 +107,10 @@ if __name__ == "__main__":
 
     logger = logging.getLogger()
 
-    process = processCamera(queueList, logger, debugg)
+    #process = processCamera(queueList, logger, debugg)
+    from multiprocessing import Event
+ready_event = Event()
+process = processCamera(queueList, logger, ready_event, debugging=debugg)
 
     process.daemon = True
     process.start()
@@ -109,8 +119,12 @@ if __name__ == "__main__":
     if debugg:
         logger.warning("getting")
     img = {"msgValue": 1}
-    while not isinstance(img["msgValue"], str):
-        img = queueList["General"].get()
+    #while not isinstance(img["msgValue"], str):
+       # img = queueList["General"].get()
+       try:
+    img = queueList["General"].get(timeout=5)  # čeka max 5s
+except queue.Empty:
+    raise TimeoutError("No image received in queue")
     
     msg_value = img["msgValue"]
     if isinstance(msg_value, str):
