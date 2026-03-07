@@ -11,7 +11,7 @@ log() {
 
 log "start-brain.sh started"
 
-cd "$BRAIN_PATH"
+cd "/home/pi/Documents/NPRS/Brain"
 
 log "No existing brain found. Starting Python brain process..."
 exec $PYTHON_ENV main.py >> /var/log/brain-monitor.log 2>&1

@@ -10,7 +10,7 @@ log() {
 }
 
 # Change to the dashboard directory
-cd "$DASHBOARD_PATH"
+cd "/home/pi/Documents/NPRS/Brain/src/dashboard/frontend"
 
 # Ensure node_modules exists
 if [ ! -d "node_modules" ]; then
